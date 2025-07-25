@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ping Pong Game</title>
+    <style>
+      body {
+        background: #111;
+        color: white;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1 {
+        margin: 20px 0;
+      }
+
+      .controls {
+        margin: 10px;
+      }
+
+      select,
+      button {
+        padding: 5px 10px;
+        font-size: 16px;
+      }
+
+      canvas {
+        background: #222;
+        display: block;
+        margin: 20px auto;
+        border: 2px solid #fff;
+      }
+
+      #scoreboard {
+        font-size: 20px;
+        margin-top: 10px;
+        letter-spacing: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏓 Ping Pong Game</h1>
+    <div class="controls">
+      <label for="speed">Speed:</label>
+      <select id="speed">
+        <option value="3">Slow</option>
+        <option value="5" selected>Medium</option>
+        <option value="8">Fast</option>
+      </select>
+      <button onclick="startGame()">Start Game</button>
+    </div>
+    <canvas id="game" width="600" height="400"></canvas>
+    <div id="scoreboard">Player: 0 &nbsp;&nbsp;&nbsp; AI: 0</div>
+
+    <script>
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+
+      let paddleHeight = 80;
+      let paddleWidth = 10;
+
+      let playerY = canvas.height / 2 - paddleHeight / 2;
+      let aiY = canvas.height / 2 - paddleHeight / 2;
+
+      let ballX, ballY, ballSpeedX, ballSpeedY;
+      let ballRadius = 8;
+      let speed = 5;
+
+      let gameInterval;
+
+      let playerScore = 0;
+      let aiScore = 0;
+
+      const scoreboard = document.getElementById("scoreboard");
+
+      function resetBall() {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedX = Math.random() > 0.5 ? speed : -speed;
+        ballSpeedY = (Math.random() * 2 - 1) * speed;
+      }
+
+      function drawPaddle(x, y) {
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, y, paddleWidth, paddleHeight);
+      }
+
+      function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function updateScore() {
+        scoreboard.textContent = `Player: ${playerScore}   \u00A0\u00A0\u00A0 AI: ${aiScore}`;
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw paddles and ball
+        drawPaddle(10, playerY);
+        drawPaddle(canvas.width - 20, aiY);
+        drawBall();
+
+        // Move ball
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
+
+        // Wall collision (top & bottom)
+        if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
+          ballSpeedY = -ballSpeedY;
+        }
+
+        // Paddle collision - Player
+        if (
+          ballX - ballRadius < 20 &&
+          ballY > playerY &&
+          ballY < playerY + paddleHeight
+        ) {
+          ballSpeedX = -ballSpeedX;
+          // Slightly increase speed for challenge
+          ballSpeedX *= 1.05;
+          ballSpeedY *= 1.05;
+        }
+
+        // Paddle collision - AI
+        if (
+          ballX + ballRadius > canvas.width - 20 &&
+          ballY > aiY &&
+          ballY < aiY + paddleHeight
+        ) {
+          ballSpeedX = -ballSpeedX;
+          ballSpeedX *= 1.05;
+          ballSpeedY *= 1.05;
+        }
+
+        // Score - Ball out of bounds
+        if (ballX < 0) {
+          aiScore++;
+          updateScore();
+          resetBall();
+        } else if (ballX > canvas.width) {
+          playerScore++;
+          updateScore();
+          resetBall();
+        }
+
+        // AI paddle movement (simple tracking)
+        let aiCenter = aiY + paddleHeight / 2;
+        if (aiCenter < ballY - 15) {
+          aiY += speed * 0.6;
+        } else if (aiCenter > ballY + 15) {
+          aiY -= speed * 0.6;
+        }
+
+        // Bound AI paddle inside canvas
+        aiY = Math.max(0, Math.min(canvas.height - paddleHeight, aiY));
+      }
+
+      function startGame() {
+        clearInterval(gameInterval);
+        speed = parseInt(document.getElementById("speed").value);
+        playerY = canvas.height / 2 - paddleHeight / 2;
+        aiY = canvas.height / 2 - paddleHeight / 2;
+        playerScore = 0;
+        aiScore = 0;
+        updateScore();
+        resetBall();
+        gameInterval = setInterval(draw, 1000 / 60);
+      }
+
+      // Player paddle movement by mouse
+      canvas.addEventListener("mousemove", function (e) {
+        let rect = canvas.getBoundingClientRect();
+        let root = document.documentElement;
+        let mouseY = e.clientY - rect.top - root.scrollTop;
+        playerY = mouseY - paddleHeight / 2;
+        playerY = Math.max(0, Math.min(canvas.height - paddleHeight, playerY));
+      });
+    </script>
+  </body>
+</html>
