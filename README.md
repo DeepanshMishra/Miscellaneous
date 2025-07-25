@@ -8,7 +8,7 @@ This repo is a playground for various web development projects, ranging from sim
 
 ## Projects
 
-Each project is located with a descriptive name. These all are small single file codes. Feel free to explore, learn, and modify the code!
+Each project is located with a descriptive name. These all are small single file codes some are basic games or somekind of effects. Feel free to explore, learn, and modify the code!
 
 ## Technologies Used
 
