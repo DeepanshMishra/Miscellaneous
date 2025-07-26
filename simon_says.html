@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simon Says Game</title>
+    <style>
+      body {
+        background: #222;
+        color: white;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        user-select: none;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      #game {
+        display: grid;
+        grid-template-columns: repeat(2, 150px);
+        grid-template-rows: repeat(2, 150px);
+        gap: 15px;
+      }
+      .btn {
+        width: 150px;
+        height: 150px;
+        border-radius: 20px;
+        cursor: pointer;
+        box-shadow: 0 5px 0 #111;
+        transition: filter 0.2s ease;
+        user-select: none;
+      }
+      .btn:active {
+        filter: brightness(1.2);
+        box-shadow: 0 2px 0 #111;
+        transform: translateY(3px);
+      }
+      .green {
+        background: #28a745;
+      }
+      .red {
+        background: #dc3545;
+      }
+      .yellow {
+        background: #ffc107;
+      }
+      .blue {
+        background: #007bff;
+      }
+
+      .btn.active {
+        filter: brightness(1.5);
+        box-shadow: 0 2px 20px white;
+      }
+
+      #info {
+        margin-top: 25px;
+        font-size: 1.2rem;
+      }
+
+      #start-btn {
+        margin-top: 25px;
+        padding: 10px 25px;
+        font-size: 1.1rem;
+        background-color: #444;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      #start-btn:hover {
+        background-color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simon Says</h1>
+
+    <div id="game">
+      <div class="btn green" data-color="green"></div>
+      <div class="btn red" data-color="red"></div>
+      <div class="btn yellow" data-color="yellow"></div>
+      <div class="btn blue" data-color="blue"></div>
+    </div>
+
+    <div id="info">Press Start to Play!</div>
+    <button id="start-btn">Start Game</button>
+
+    <script>
+      const buttons = {
+        green: document.querySelector(".green"),
+        red: document.querySelector(".red"),
+        yellow: document.querySelector(".yellow"),
+        blue: document.querySelector(".blue"),
+      };
+
+      const startBtn = document.getElementById("start-btn");
+      const info = document.getElementById("info");
+
+      let sequence = [];
+      let playerSequence = [];
+      let round = 0;
+      let acceptingInput = false;
+
+      function playSound(color) {
+        // simple beep using Web Audio API
+        const freqMap = {
+          green: 329.63,
+          red: 261.63,
+          yellow: 220.0,
+          blue: 164.81,
+        };
+        const context = new (window.AudioContext ||
+          window.webkitAudioContext)();
+        const o = context.createOscillator();
+        const g = context.createGain();
+        o.frequency.value = freqMap[color];
+        o.type = "sine";
+        o.connect(g);
+        g.connect(context.destination);
+        o.start(0);
+        g.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.3);
+        setTimeout(() => {
+          o.stop();
+          context.close();
+        }, 350);
+      }
+
+      function lightUp(color) {
+        return new Promise((resolve) => {
+          buttons[color].classList.add("active");
+          playSound(color);
+          setTimeout(() => {
+            buttons[color].classList.remove("active");
+            setTimeout(resolve, 200);
+          }, 600);
+        });
+      }
+
+      async function playSequence() {
+        acceptingInput = false;
+        for (const color of sequence) {
+          await lightUp(color);
+        }
+        acceptingInput = true;
+        playerSequence = [];
+        info.textContent = `Round ${round} — Your turn!`;
+      }
+
+      function nextRound() {
+        round++;
+        info.textContent = `Round ${round} — Watch the sequence!`;
+        // add a random color
+        const colors = Object.keys(buttons);
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        sequence.push(randomColor);
+        playSequence();
+      }
+
+      function resetGame() {
+        sequence = [];
+        playerSequence = [];
+        round = 0;
+        acceptingInput = false;
+        info.textContent = "Press Start to Play!";
+      }
+
+      async function handlePlayerClick(color) {
+        if (!acceptingInput) return;
+        playerSequence.push(color);
+        await lightUp(color);
+
+        // Check if current input matches sequence so far
+        for (let i = 0; i < playerSequence.length; i++) {
+          if (playerSequence[i] !== sequence[i]) {
+            acceptingInput = false;
+            info.textContent = `Game Over! You reached round ${round}. Press Start to try again.`;
+            return;
+          }
+        }
+
+        if (playerSequence.length === sequence.length) {
+          acceptingInput = false;
+          setTimeout(nextRound, 1000);
+        }
+      }
+
+      // Attach event listeners to buttons
+      for (const color in buttons) {
+        buttons[color].addEventListener("click", () =>
+          handlePlayerClick(color)
+        );
+      }
+
+      startBtn.addEventListener("click", () => {
+        resetGame();
+        nextRound();
+      });
+    </script>
+  </body>
+</html>
