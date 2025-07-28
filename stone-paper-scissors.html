@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stone Paper Scissors</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #fefcea, #f1da36);
+        margin: 0;
+        padding: 40px 20px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .game-area {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .player,
+      .computer {
+        width: 150px;
+        height: 150px;
+        margin: 0 30px;
+        font-size: 80px;
+        line-height: 150px;
+        border: 3px solid #444;
+        border-radius: 20px;
+        background: #fff;
+        transition: all 0.3s ease-in-out;
+      }
+
+      .shake {
+        animation: shake 0.6s ease-in-out;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        25% {
+          transform: rotate(15deg);
+        }
+        50% {
+          transform: rotate(-15deg);
+        }
+        75% {
+          transform: rotate(10deg);
+        }
+      }
+
+      .choices {
+        margin: 30px 0;
+      }
+
+      .choice {
+        display: inline-block;
+        font-size: 28px;
+        margin: 0 15px;
+        padding: 10px 20px;
+        cursor: pointer;
+        border: 2px solid #333;
+        border-radius: 10px;
+        background: white;
+        transition: 0.3s;
+      }
+
+      .choice:hover {
+        background-color: #ddd;
+        transform: scale(1.05);
+      }
+
+      #result {
+        font-size: 1.5rem;
+        color: #111;
+        margin-top: 25px;
+      }
+
+      #score {
+        margin-top: 10px;
+        font-size: 1.2rem;
+        color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Stone Paper Scissors ✊🖐✌️</h1>
+
+    <div class="game-area">
+      <div id="playerHand" class="player">❓</div>
+      <div id="computerHand" class="computer">❓</div>
+    </div>
+
+    <div class="choices">
+      <div class="choice" onclick="play('stone')">✊ Stone</div>
+      <div class="choice" onclick="play('paper')">🖐 Paper</div>
+      <div class="choice" onclick="play('scissors')">✌️ Scissors</div>
+    </div>
+
+    <div id="result">Choose your move!</div>
+    <div id="score">You: 0 | Computer: 0</div>
+
+    <script>
+      const playerHand = document.getElementById("playerHand");
+      const computerHand = document.getElementById("computerHand");
+      const resultDiv = document.getElementById("result");
+      const scoreDiv = document.getElementById("score");
+
+      let userScore = 0;
+      let computerScore = 0;
+
+      const moves = {
+        stone: "✊",
+        paper: "🖐",
+        scissors: "✌️",
+      };
+
+      function play(userChoice) {
+        const computerChoice = getComputerChoice();
+
+        // Animate hands before showing choices
+        playerHand.textContent = "🤜";
+        computerHand.textContent = "🤛";
+        playerHand.classList.add("shake");
+        computerHand.classList.add("shake");
+
+        setTimeout(() => {
+          playerHand.classList.remove("shake");
+          computerHand.classList.remove("shake");
+          playerHand.textContent = moves[userChoice];
+          computerHand.textContent = moves[computerChoice];
+
+          const result = getResult(userChoice, computerChoice);
+          resultDiv.textContent = result.message;
+
+          if (result.winner === "user") userScore++;
+          if (result.winner === "computer") computerScore++;
+
+          scoreDiv.textContent = `You: ${userScore} | Computer: ${computerScore}`;
+        }, 600);
+      }
+
+      function getComputerChoice() {
+        const options = ["stone", "paper", "scissors"];
+        return options[Math.floor(Math.random() * options.length)];
+      }
+
+      function getResult(user, computer) {
+        if (user === computer) {
+          return { winner: "draw", message: "It's a draw!" };
+        }
+        if (
+          (user === "stone" && computer === "scissors") ||
+          (user === "paper" && computer === "stone") ||
+          (user === "scissors" && computer === "paper")
+        ) {
+          return {
+            winner: "user",
+            message: `You win! ${capitalize(user)} beats ${capitalize(
+              computer
+            )}!`,
+          };
+        } else {
+          return {
+            winner: "computer",
+            message: `You lose! ${capitalize(computer)} beats ${capitalize(
+              user
+            )}.`,
+          };
+        }
+      }
+
+      function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+    </script>
+  </body>
+</html>
