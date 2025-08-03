@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rotating Sun with Vibrant Radiation Waves</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          #ffdd33,
+          #ff9900 2%,
+          #330000
+        );
+      }
+      canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="sunCanvas"></canvas>
+    <script>
+      (() => {
+        const canvas = document.getElementById("sunCanvas");
+        const ctx = canvas.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+
+        let width, height, cx, cy;
+        function resize() {
+          width = window.innerWidth;
+          height = window.innerHeight;
+          cx = width / 2;
+          cy = height / 2;
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+          canvas.style.width = width + "px";
+          canvas.style.height = height + "px";
+          ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+          ctx.scale(dpr, dpr);
+        }
+        window.addEventListener("resize", resize);
+        resize();
+
+        const sunRadius = 60;
+        let rotation = 0;
+
+        class RadiationWave {
+          constructor(angle) {
+            this.angle = angle;
+            this.radius = sunRadius;
+            this.maxRadius = Math.max(width, height);
+            this.lineWidth = 3;
+            this.alpha = 0.9; // Increased opacity
+            this.speed = 2.5 + Math.random() * 1;
+            this.widthWave = 15 + Math.random() * 10; // thicker waves
+          }
+          update() {
+            this.radius += this.speed;
+            this.alpha -= 0.006; // fade slower for longer visibility
+            if (this.alpha < 0) this.alpha = 0;
+          }
+          draw(ctx) {
+            const x = cx + Math.cos(this.angle) * this.radius;
+            const y = cy + Math.sin(this.angle) * this.radius;
+
+            // Draw multiple concentric rings for glow effect
+            for (let i = 0; i < 3; i++) {
+              let factor = 1 + i * 0.4;
+              let alphaFactor = this.alpha / (i + 1);
+              const gradient = ctx.createRadialGradient(
+                x,
+                y,
+                this.widthWave * 0.15 * factor,
+                x,
+                y,
+                this.widthWave * factor
+              );
+              gradient.addColorStop(0, `rgba(255, 255, 200, ${alphaFactor})`);
+              gradient.addColorStop(1, `rgba(255, 255, 180, 0)`);
+
+              ctx.beginPath();
+              ctx.strokeStyle = gradient;
+              ctx.lineWidth = this.lineWidth / (i + 1);
+              ctx.shadowColor = `rgba(255, 255, 220, ${alphaFactor})`;
+              ctx.shadowBlur = 20 * factor;
+              ctx.arc(x, y, this.widthWave * factor, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+          isDone() {
+            return this.alpha <= 0 || this.radius > this.maxRadius;
+          }
+        }
+
+        const waves = [];
+        let emitAngle = 0;
+
+        function drawSun(ctx, cx, cy, radius, rotation) {
+          const gradient = ctx.createRadialGradient(
+            cx,
+            cy,
+            radius * 0.5,
+            cx,
+            cy,
+            radius
+          );
+          gradient.addColorStop(0, "#fffacd");
+          gradient.addColorStop(1, "#ffcc00");
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rotation);
+
+          ctx.fillStyle = gradient;
+          ctx.shadowColor = "rgba(255, 204, 0, 0.9)";
+          ctx.shadowBlur = 50;
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(255, 255, 200, 0.9)";
+          ctx.lineWidth = 5;
+          ctx.shadowColor = "rgba(255, 255, 200, 1)";
+          ctx.shadowBlur = 20;
+
+          for (let i = 0; i < 12; i++) {
+            const angle = (i * Math.PI * 2) / 12;
+            ctx.beginPath();
+            const inner = radius * 1.1;
+            const outer = radius * 1.7;
+            ctx.moveTo(inner * Math.cos(angle), inner * Math.sin(angle));
+            ctx.lineTo(outer * Math.cos(angle), outer * Math.sin(angle));
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        function animate() {
+          ctx.clearRect(0, 0, width, height);
+
+          waves.push(new RadiationWave(emitAngle));
+          emitAngle += 0.12;
+          if (emitAngle > Math.PI * 2) emitAngle -= Math.PI * 2;
+
+          for (let i = waves.length - 1; i >= 0; i--) {
+            const w = waves[i];
+            w.update();
+            w.draw(ctx);
+            if (w.isDone()) waves.splice(i, 1);
+          }
+
+          rotation += 0.015;
+          drawSun(ctx, cx, cy, sunRadius, rotation);
+
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+      })();
+    </script>
+  </body>
+</html>
